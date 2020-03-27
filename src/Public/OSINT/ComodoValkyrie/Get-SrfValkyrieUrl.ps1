@@ -17,7 +17,7 @@ function Get-SrfValkyrieUrl {
         $RequestUrl = "https://verdict.valkyrie.comodo.com/api/v1/url/query?url=$Uri&analyze=true"
 
         #$Token = $Credential.GetNetworkCredential().Password
-        $Token = "***REMOVED***"
+        $Token = ""
         $Headers = [Dictionary[string,string]]::new()
         $Headers.Add("X-Api-Key", "$Token")
         #$Headers.Add("Content-Type","application/json")

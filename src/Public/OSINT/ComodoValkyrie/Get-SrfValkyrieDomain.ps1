@@ -16,7 +16,7 @@ function Get-SrfValkyrieDomain {
         $RequestUrl =  $SrfPreferences.ComodoValkarie.ValkarieBaseUrl+"domain/query?domain=$Domain&use_cache=$UseCache"
 
         #$Token = $Credential.GetNetworkCredential().Password
-        $Token = "***REMOVED***"
+        $Token = ""
         $Headers = [Dictionary[string,string]]::new()
         $Headers.Add("X-Api-Key", "$Token")
         #$Headers.Add("Content-Type","application/json")
