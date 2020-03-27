@@ -12,14 +12,14 @@
 
         "VirusTotal": {
             "BaseUrl": "http://www.virustotal.com/vtapi/v2",
-            "APIKey": "***REMOVED***",
+            "APIKey": "",
             "Commercial": "False"
         },
 
         "UrlScan": {
             "BaseUrl": "https://urlscan.io/api/v1",
             "ScreenshotUrl": "https://urlscan.io/screenshots/",
-            "APIKey": "***REMOVED***",
+            "APIKey": "",
             "PublicScans": "On"
         },
 
