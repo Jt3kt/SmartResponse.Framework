@@ -6,5 +6,26 @@
         "AieApiUrl": "https://localhost:8501/lr-drilldown-cache-api",
         "LrApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_LrApiToken.xml",
         "LrApiCredential": ""
+    },
+
+    "OSINT": {
+
+        "VirusTotal": {
+            "BaseUrl": "http://www.virustotal.com/vtapi/v2",
+            "APIKey": "***REMOVED***",
+            "Commercial": "False"
+        },
+
+        "UrlScan": {
+            "BaseUrl": "https://urlscan.io/api/v1",
+            "ScreenshotUrl": "https://urlscan.io/screenshots/",
+            "APIKey": "***REMOVED***",
+            "PublicScans": "On"
+        },
+
+        "ComodoValkyrie": {
+            "BaseUrl": "https://verdict.valkyrie.comodo.com/api/v1/",
+            "APIKey": ""
+        }
     }
 }
