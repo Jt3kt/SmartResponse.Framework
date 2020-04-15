@@ -47,12 +47,15 @@ Param(
     [switch] $RemoveOld,
 
     [Parameter(Mandatory = $false, Position = 1)]
-    [string] $ApiTokenPath = "$PSScriptRoot\tests\cred_LrApiToken.xml",
+    [string] $LrApiTokenPath = "$PSScriptRoot\tests\cred_LrApiToken.xml",
 
     [Parameter(Mandatory = $false, Position = 2)]
-    [switch] $PassThru,
+    [string] $NmApiTokenPath = "$PSScriptRoot\tests\cred_NmApiToken.xml",
 
     [Parameter(Mandatory = $false, Position = 3)]
+    [switch] $PassThru,
+
+    [Parameter(Mandatory = $false, Position = 4)]
     [switch] $Dev
 )
 
@@ -122,8 +125,30 @@ Write-Host "[Success]" -ForegroundColor Green
 #region: LrApi Token Preference                                                          
 Write-Host "Import LrApi Token: " -NoNewline
 try { 
-    $Token = Import-Clixml -Path $ApiTokenPath
-    $SrfPreferences.LrDeployment.LrApiCredential = $Token
+    $LrToken = Import-Clixml -Path $LrApiTokenPath
+    $SrfPreferences.LrDeployment.LrApiCredential = $LrToken
+    Write-Host "[Success]" -ForegroundColor Green
+}
+catch [CryptographicException] { 
+    Write-Host "[Access Denied]" -ForegroundColor Red
+    $PSCmdlet.ThrowTerminatingError($PSItem)
+}
+catch [FileNotFoundException] {
+    # this is normal for anyone not intending to use this feature
+    Write-Host "[Not Found]" -ForegroundColor Gray
+}
+catch [Exception] {
+    Write-Host "[Failed]" -ForegroundColor Red
+    $PSCmdlet.ThrowTerminatingError($PSItem)
+}
+Write-Host "===========================================" -ForegroundColor Gray
+#endregion
+
+#region: NetmonApi Token Preference                                                          
+Write-Host "Import NmApi Token: " -NoNewline
+try { 
+    $NmToken = Import-Clixml -Path $NmApiTokenPath
+    $SrfPreferences.LrNetmon.NmApiCredential = $NmToken
     Write-Host "[Success]" -ForegroundColor Green
 }
 catch [CryptographicException] { 

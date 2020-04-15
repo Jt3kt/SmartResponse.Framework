@@ -6,5 +6,29 @@
         "AieApiUrl": "https://localhost:8501/lr-drilldown-cache-api",
         "LrApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_LrApiToken.xml",
         "LrApiCredential": ""
+    },
+
+    "LrNetmon": {
+        "1": {
+            "NmApiBaseUrl": "https://192.168.2.180/api/",
+            "NmApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_Nm_1_ApiToken.xml",
+            "NmApiCredential_1": ""
+        },
+        "2": {
+            "NmApiBaseUrl": "https://192.168.2.180/api/",
+            "NmApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_Nm_2_ApiToken.xml",
+            "NmApiCredential_2": ""
+        },
+        "3": {
+            "NmApiBaseUrl": "https://192.168.2.180/api/",
+            "NmApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_Nm_3_ApiToken.xml",
+            "NmApiCredential_3": ""
+        },
+        "4": {
+            "NmApiBaseUrl": "https://192.168.2.180/api/",
+            "NmApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_Nm_4_piToken.xml",
+            "NmApiCredential_4": ""
+        }
+        
     }
 }
