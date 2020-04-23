@@ -148,7 +148,7 @@ Write-Host "===========================================" -ForegroundColor Gray
 Write-Host "Import NmApi Token: " -NoNewline
 try { 
     $NmToken = Import-Clixml -Path $NmApiTokenPath
-    $SrfPreferences.LrNetmon.NmApiCredential = $NmToken
+    $SrfPreferences.LrNetmon.n1.NmApiCredential = $NmToken
     Write-Host "[Success]" -ForegroundColor Green
 }
 catch [CryptographicException] { 

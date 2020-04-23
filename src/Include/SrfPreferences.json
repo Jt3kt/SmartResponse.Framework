@@ -9,26 +9,25 @@
     },
 
     "LrNetmon": {
-        "1": {
+        "n1": {
             "NmApiBaseUrl": "https://192.168.2.180/api/",
             "NmApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_Nm_1_ApiToken.xml",
-            "NmApiCredential_1": ""
+            "NmApiCredential": ""
         },
-        "2": {
+        "n2": {
             "NmApiBaseUrl": "https://192.168.2.180/api/",
             "NmApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_Nm_2_ApiToken.xml",
-            "NmApiCredential_2": ""
+            "NmApiCredential": ""
         },
-        "3": {
+        "n3": {
             "NmApiBaseUrl": "https://192.168.2.180/api/",
             "NmApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_Nm_3_ApiToken.xml",
-            "NmApiCredential_3": ""
+            "NmApiCredential": ""
         },
-        "4": {
+        "n4": {
             "NmApiBaseUrl": "https://192.168.2.180/api/",
             "NmApiCredentialPath": "C:\\repos\\SmartResponse.Framework\\tests\\cred_Nm_4_piToken.xml",
-            "NmApiCredential_4": ""
+            "NmApiCredential": ""
         }
-        
     }
 }
