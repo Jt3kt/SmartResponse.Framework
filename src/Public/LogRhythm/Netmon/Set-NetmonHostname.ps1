@@ -35,7 +35,7 @@ Function Set-NetmonHostname {
     Param(
         [Parameter(Mandatory = $false, Position = 0)]
         [ValidateNotNull()]
-        [pscredential] $Credential = $SrfPreferences.LrNetmon.NmApiCredential,
+        [pscredential] $Credential = $SrfPreferences.LrNetmon.n1.NmApiCredential,
 
         [Parameter(Mandatory = $true, Position = 1)]
         [ValidateNotNull()]
@@ -44,7 +44,7 @@ Function Set-NetmonHostname {
 
     Begin {
         Enable-TrustAllCertsPolicy
-        $BaseUrl = $SrfPreferences.LrNetmon.NmApiBaseUrl
+        $BaseUrl = $SrfPreferences.LrNetmon.n1.NmApiBaseUrl
         $NetmonAPI = $($Credential.GetNetworkCredential().UserName)+":"+$($Credential.GetNetworkCredential().Password)
         $Token = New-SrfBase64String -String $NetmonAPI
         
