@@ -61,5 +61,3 @@ Function Test-ValidUrl {
 
     return $OutObject
 }
-
-Test-ValidIPv4Address
