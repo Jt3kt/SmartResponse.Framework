@@ -85,7 +85,7 @@ Function Add-LrListItem {
         [object] $Name,
 
         [Parameter(Mandatory=$false, ValueFromPipeline=$true, Position=2)]
-        [string] $Value,
+        [array[string]] $Value,
 
         [Parameter(Mandatory=$false, Position=3)]
         [string] $ItemType,
@@ -93,13 +93,27 @@ Function Add-LrListItem {
         [Parameter(Mandatory=$false, Position=4)]
         [switch] $LoadListItems
     )
-
-    #region: BEGIN                                                                       
+                                                                   
     Begin {
+        # Request Setup
         $Me = $MyInvocation.MyCommand.Name
         $BaseUrl = $SrfPreferences.LRDeployment.AdminApiBaseUrl
         $Token = $Credential.GetNetworkCredential().Password
 
+        # Define HTTP Headers
+        $Headers = [Dictionary[string,string]]::new()
+        $Headers.Add("Authorization", "Bearer $Token")
+        $Headers.Add("Content-Type","application/json")
+        if ($LoadListItems) {
+            $Headers.Add("loadListItems",$LoadListItems)
+        }
+
+        #$ExpDate = (Get-Date).AddDays(7).ToString("yyyy-MM-dd")
+
+        # Define HTTP Method
+        $Method = $HttpMethod.Post
+
+        # Check preference requirements for self-signed certificates and set enforcement for Tls1.2 
         Enable-TrustAllCertsPolicy
     }
 
@@ -137,38 +151,72 @@ Function Add-LrListItem {
         # Map listItemDataType
         switch ($LrListType) {
             Application {
-                if ($Value -like "*,*" -Or $ItemType.tolower() -eq "portrange") {
-                    # Pair of Integer for TCP/UDP Port
-                    if ($Value.split(",").Count -ne 2) {
-                        $ErrorObject.Error = $true
-                        $ErrorObject.FieldType =  "PortRange"
-                        $ErrorObject.QuantityMismatch =   $true
-                        $ErrorObject.Note = "Quantity Mismatch.  Values Submited: $($Value.split(",").Count) - ValuesRequired: 2"
-                    }
-                    $Value.split(",").Trim() | ForEach-Object {
-                        # Validate each port
-                        $PortValid = Test-ValidTCPUDPPort $_
-                        if ($PortValid.IsValid -eq $false) {
-                            $ErrorObject.Error = $true
-                            $ErrorObject.FieldType =  "PortRange"
-                            $ErrorObject.Note = "Improper PortRange Value. Value Submited: $_ - ValueRange: 0-65535"
+                if ($Value -is [array]) {
+                    ForEach ($Entry in $Value) {
+                        if ($Entry -like "*,*" -Or $ItemType.tolower() -eq "portrange") {
+                            # Pair of Integer for TCP/UDP Port
+                            if ($Entry.split(",").Count -ne 2) {
+                                $ErrorObject.Error = $true
+                                $ErrorObject.FieldType =  "PortRange"
+                                $ErrorObject.QuantityMismatch =   $true
+                                $ErrorObject.Note = "Quantity Mismatch.  Values Submited: $($Entry.split(",").Count) - ValuesRequired: 2"
+                            }
+                            $Entry.split(",").Trim() | ForEach-Object {
+                                # Validate each port
+                                $PortValid = Test-ValidTCPUDPPort $_
+                                if ($PortValid.IsValid -eq $false) {
+                                    $ErrorObject.Error = $true
+                                    $ErrorObject.FieldType =  "PortRange"
+                                    $ErrorObject.Note = "Improper PortRange Value. Value Submited: $_ - ValueRange: 0-65535"
+                                }
+                            }
+                            # Set List metadata type
+                            $ListItemDataType = "PortRange"
+                            $ListItemType = "PortRange"
+                        } else {
+                            # Validate TCP/UDP Port
+                            $PortValid = Test-ValidTCPUDPPort $Value
+                            if ($PortValid.IsValid -eq $false) {
+                                $ErrorObject.Error = $true
+                                $ErrorObject.FieldType =  "Port"
+                                $ErrorObject.Note = "Improper Port Value. Value Submited: $Value - ValueRange: 0-65535"
+                            }
+                            $ListItemDataType = "Int32"
+                            $ListItemType = "Port"
                         }
                     }
-                    # Set List metadata type
-                    $ListItemDataType = "PortRange"
-                    $ListItemType = "PortRange"
-
                 } else {
-                    # Single Integer for TCP/UDP Port
-                    # Validate each port
-                    $PortValid = Test-ValidTCPUDPPort $Value
-                    if ($PortValid.IsValid -eq $false) {
-                        $ErrorObject.Error = $true
-                        $ErrorObject.FieldType =  "Port"
-                        $ErrorObject.Note = "Improper Port Value. Value Submited: $Value - ValueRange: 0-65535"
+                    if ($Value -like "*,*" -Or $ItemType.tolower() -eq "portrange") {
+                        # Pair of Integer for TCP/UDP Port
+                        if ($Value.split(",").Count -ne 2) {
+                            $ErrorObject.Error = $true
+                            $ErrorObject.FieldType =  "PortRange"
+                            $ErrorObject.QuantityMismatch =   $true
+                            $ErrorObject.Note = "Quantity Mismatch.  Values Submited: $($Value.split(",").Count) - ValuesRequired: 2"
+                        }
+                        $Value.split(",").Trim() | ForEach-Object {
+                            # Validate each port
+                            $PortValid = Test-ValidTCPUDPPort $_
+                            if ($PortValid.IsValid -eq $false) {
+                                $ErrorObject.Error = $true
+                                $ErrorObject.FieldType =  "PortRange"
+                                $ErrorObject.Note = "Improper PortRange Value. Value Submited: $_ - ValueRange: 0-65535"
+                            }
+                        }
+                        # Set List metadata type
+                        $ListItemDataType = "PortRange"
+                        $ListItemType = "PortRange"
+                    } else {
+                        # Validate TCP/UDP Port
+                        $PortValid = Test-ValidTCPUDPPort $Value
+                        if ($PortValid.IsValid -eq $false) {
+                            $ErrorObject.Error = $true
+                            $ErrorObject.FieldType =  "Port"
+                            $ErrorObject.Note = "Improper Port Value. Value Submited: $Value - ValueRange: 0-65535"
+                        }
+                        $ListItemDataType = "Int32"
+                        $ListItemType = "Port"
                     }
-                    $ListItemDataType = "Int32"
-                    $ListItemType = "Port"
                 }
             }
             GeneralValue {
@@ -184,19 +232,34 @@ Function Add-LrListItem {
                 if (!$ItemType) {
                     # Reference for Integer Cast
                     $_int = 1                  
-                    
-                    if ($Value.split(",").Count -gt 1) {
-                        Write-Verbose "[$Me]: Host:ItemType - More than one value present.  Value set as IPRange."
-                        $ItemType = "iprange"
-                    } elseif (($Value -as [IPAddress] -as [Bool]) -eq $true) {
-                        Write-Verbose "[$Me]: Host:ItemType - Value parses as IP Address."
-                        $ItemType = "ip"
-                    } elseif ([int]::TryParse($Value, [ref]$_int)) {
-                        Write-Verbose "[$Me]: Host:ItemType - Value parses as knownhost integer."
-                        $ItemType = "knownhost"
+                    if ($Value -is [array]) {
+                        if ($Value[0].split(",").Count -gt 1) {
+                            Write-Verbose "[$Me]: Host:ItemType - More than one value present.  Value set as IPRange."
+                            $ItemType = "iprange"
+                        } elseif (($Value[0] -as [IPAddress] -as [Bool]) -eq $true) {
+                            Write-Verbose "[$Me]: Host:ItemType - Value parses as IP Address."
+                            $ItemType = "ip"
+                        } elseif ([int]::TryParse($Value[0], [ref]$_int)) {
+                            Write-Verbose "[$Me]: Host:ItemType - Value parses as knownhost integer."
+                            $ItemType = "knownhost"
+                        } else {
+                            Write-Verbose "[$Me]: Host:ItemType - Value set as hostname string."
+                            $ItemType = "hostname"
+                        }
                     } else {
-                        Write-Verbose "[$Me]: Host:ItemType - Value set as hostname string."
-                        $ItemType = "hostname"
+                        if ($Value.split(",").Count -gt 1) {
+                            Write-Verbose "[$Me]: Host:ItemType - More than one value present.  Value set as IPRange."
+                            $ItemType = "iprange"
+                        } elseif (($Value -as [IPAddress] -as [Bool]) -eq $true) {
+                            Write-Verbose "[$Me]: Host:ItemType - Value parses as IP Address."
+                            $ItemType = "ip"
+                        } elseif ([int]::TryParse($Value, [ref]$_int)) {
+                            Write-Verbose "[$Me]: Host:ItemType - Value parses as knownhost integer."
+                            $ItemType = "knownhost"
+                        } else {
+                            Write-Verbose "[$Me]: Host:ItemType - Value set as hostname string."
+                            $ItemType = "hostname"
+                        }
                     }
                 } 
                 switch ($ItemType.ToLower()) {
@@ -206,21 +269,126 @@ Function Add-LrListItem {
                         # Until a method of looking up KnownHost from Int32 this ListType is not supported.
                         $ErrorObject.Error = $true
                         $ErrorObject.FieldType = $ListItemType
-                        $ErrorObject.Note = "ListType KnownHost is currently not supported by the SmartResponse Framework"
+                        $ErrorObject.Note = "ListType KnownHost is currently not supported"
                     }
                     hostname {
                         $ListItemDataType = "String"
                         $ListItemType = "HostName" 
                     }
                     iprange {
-                        # Range of IP Addresses
-                        if ($Value.split(",").Count -ne 2) {
+                        if ($Value -is [array]) {
+                            ForEach ($Entry in $Value) {
+                                if ($Entry.split(",").Count -ne 2) {
+                                    $ErrorObject.Error = $true
+                                    $ErrorObject.FieldType =  "IPRange"
+                                    $ErrorObject.QuantityMismatch =   $true
+                                    $ErrorObject.Note = "Quantity Mismatch.  Values Submited: $($Entry.split(",").Count) - ValuesRequired: 2"
+                                }
+                                $Entry.split(",").Trim() | ForEach-Object {
+                                    # Validate each IP Address
+                                    $IPValid = $_ -as [IPAddress] -as [Bool]
+                                    if ($IPValid -eq $false) {
+                                        $ErrorObject.Error = $true
+                                        $ErrorObject.FieldType =  "IPRange"
+                                        $ErrorObject.TypeMismatch = $true
+                                        $ErrorObject.Note = "Type Mismatch.  Values Submited: $_ - Type Required: IPv4/IPv6 Address"
+                                    }
+                                }
+                                # Remove spaces from Entry
+                                $Entry = $Entry.Replace(" ","")
+                            } 
+                        } else { 
+                            # Range of IP Addresses
+                            if ($Value.split(",").Count -ne 2) {
+                                $ErrorObject.Error = $true
+                                $ErrorObject.FieldType =  "IPRange"
+                                $ErrorObject.QuantityMismatch =   $true
+                                $ErrorObject.Note = "Quantity Mismatch.  Values Submited: $($Value.split(",").Count) - ValuesRequired: 2"
+                            }
+                            $Value.split(",").Trim() | ForEach-Object {
+                                # Validate each IP Address
+                                $IPValid = $_ -as [IPAddress] -as [Bool]
+                                if ($IPValid -eq $false) {
+                                    $ErrorObject.Error = $true
+                                    $ErrorObject.FieldType =  "IPRange"
+                                    $ErrorObject.TypeMismatch = $true
+                                    $ErrorObject.Note = "Type Mismatch.  Values Submited: $_ - Type Required: IPv4/IPv6 Address"
+                                }
+                            }
+                            # Remove all spaces from Value to support type IPRange
+                            $Value = $Value.Replace(" ","")
+                        }
+                        $ListItemDataType = "IPRange"
+                        $ListItemType = "IPRange" 
+                    }
+                    ip {
+                        if ($Value -is [array]) {
+                            ForEach ($Entry in $Value) {
+                                # Validate IP Address format
+                                $IPValid = $Entry -as [IPAddress] -as [Bool]
+                                if ($IPValid -eq $false) {
+                                    $ErrorObject.Error = $true
+                                    $ErrorObject.FieldType =  "IP"
+                                    $ErrorObject.TypeMismatch = $true
+                                    $ErrorObject.Note = "Type Mismatch.  Values Submited: $Entry - Type Required: IPv4/IPv6 Address"
+                                }
+                            }
+                        } else {
+                            # Validate IP Address format
+                            $IPValid = $Value -as [IPAddress] -as [Bool]
+                            if ($IPValid -eq $false) {
+                                $ErrorObject.Error = $true
+                                $ErrorObject.FieldType =  "IP"
+                                $ErrorObject.TypeMismatch = $true
+                                $ErrorObject.Note = "Type Mismatch.  Values Submited: $Value - Type Required: IPv4/IPv6 Address"
+                            }
+                        }
+
+                        $ListItemDataType = "IP"
+                        $ListItemType = "IP" 
+                    }
+                    Default {
+
+                    }
+                }
+            }
+            IP {
+                # Validate IP Address format
+                if ($Value -is [array]) {
+                    ForEach ($Entry in $Value) {
+                        $IPValid = $Entry -as [IPAddress] -as [Bool]
+                        Write-Verbose "[$Me] IPValid: $IPValid"
+                        if ($IPValid -eq $false) {
+                            $ErrorObject.Error = $true
+                            $ErrorObject.FieldType =  "IP"
+                            $ErrorObject.TypeMismatch = $true
+                            $ErrorObject.Note = "Type Mismatch.  Values Submited: $Entry - Type Required: IPv4/IPv6 Address"
+                        }
+                    }
+                } else {
+                    $IPValid = $Value -as [IPAddress] -as [Bool]
+                    Write-Verbose "[$Me] IPValid: $IPValid"
+                    if ($IPValid -eq $false) {
+                        $ErrorObject.Error = $true
+                        $ErrorObject.FieldType =  "IP"
+                        $ErrorObject.TypeMismatch = $true
+                        $ErrorObject.Note = "Type Mismatch.  Values Submited: $Value - Type Required: IPv4/IPv6 Address"
+                    }
+                }
+                $ListItemDataType = "IP"
+                $ListItemType = "IP"
+            }
+            IPRange {
+                # Range of IP Addresses
+                if ($Value -is [array]) {
+                    ForEach ($Entry in $Value) {
+                        if ($Entry.split(",").Count -ne 2) {
                             $ErrorObject.Error = $true
                             $ErrorObject.FieldType =  "IPRange"
                             $ErrorObject.QuantityMismatch =   $true
-                            $ErrorObject.Note = "Quantity Mismatch.  Values Submited: $($Value.split(",").Count) - ValuesRequired: 2"
+                            $ErrorObject.Note = "Quantity Mismatch.  Values Submited: $($Entry.split(",").Count) - ValuesRequired: 2"
                         }
-                        $Value.split(",").Trim() | ForEach-Object {
+                        $Entry.split(",").Trim() | ForEach-Object {
                             # Validate each IP Address
                             $IPValid = $_ -as [IPAddress] -as [Bool]
                             if ($IPValid -eq $false) {
@@ -230,75 +398,37 @@ Function Add-LrListItem {
                                 $ErrorObject.Note = "Type Mismatch.  Values Submited: $_ - Type Required: IPv4/IPv6 Address"
                             }
                         }
-                        # Remove all spaces from Value to support type IPRange
-                        $Value = $Value.Replace(" ","")
-                        $ListItemDataType = "IPRange"
-                        $ListItemType = "IPRange" 
-                    }
-                    ip {
-                        # Validate IP Address format
-                        $IPValid = $Value -as [IPAddress] -as [Bool]
-                        if ($IPValid -eq $false) {
-                            $ErrorObject.Error = $true
-                            $ErrorObject.FieldType =  "IP"
-                            $ErrorObject.TypeMismatch = $true
-                            $ErrorObject.Note = "Type Mismatch.  Values Submited: $Value - Type Required: IPv4/IPv6 Address"
-                        } 
-                        $ListItemDataType = "IP"
-                        $ListItemType = "IP" 
-                    }
-                    Default {
-
-                    }
-                }
-
-            }
-            IP {
-                # Validate IP Address format
-                $IPValid = $Value -as [IPAddress] -as [Bool]
-                Write-Verbose "[$Me] IPValid: $IPValid"
-                if ($IPValid -eq $false) {
-                    $ErrorObject.Error = $true
-                    $ErrorObject.FieldType =  "IP"
-                    $ErrorObject.TypeMismatch = $true
-                    $ErrorObject.Note = "Type Mismatch.  Values Submited: $Value - Type Required: IPv4/IPv6 Address"
-                }
-                $ListItemDataType = "IP"
-                $ListItemType = "IP"
-            }
-            IPRange {
-                # Range of IP Addresses
-                if ($Value.split(",").Count -ne 2) {
-                    $ErrorObject.Error = $true
-                    $ErrorObject.FieldType =  "IPRange"
-                    $ErrorObject.QuantityMismatch =   $true
-                    $ErrorObject.Note = "Quantity Mismatch.  Values Submited: $($Value.split(",").Count) - ValuesRequired: 2"
-                }
-                $Value.split(",").Trim() | ForEach-Object {
-                    # Validate each IP Address
-                    $IPValid = $_ -as [IPAddress] -as [Bool]
-                    if ($IPValid -eq $false) {
+                        # Remove spaces from Entry
+                        $Entry = $Entry.Replace(" ","")
+                    } 
+                } else {
+                    if ($Value.split(",").Count -ne 2) {
                         $ErrorObject.Error = $true
                         $ErrorObject.FieldType =  "IPRange"
-                        $ErrorObject.TypeMismatch = $true
-                        $ErrorObject.Note = "Type Mismatch.  Values Submited: $_ - Type Required: IPv4/IPv6 Address"
+                        $ErrorObject.QuantityMismatch =   $true
+                        $ErrorObject.Note = "Quantity Mismatch.  Values Submited: $($Value.split(",").Count) - ValuesRequired: 2"
                     }
+                    $Value.split(",").Trim() | ForEach-Object {
+                        # Validate each IP Address
+                        $IPValid = $_ -as [IPAddress] -as [Bool]
+                        if ($IPValid -eq $false) {
+                            $ErrorObject.Error = $true
+                            $ErrorObject.FieldType =  "IPRange"
+                            $ErrorObject.TypeMismatch = $true
+                            $ErrorObject.Note = "Type Mismatch.  Values Submited: $_ - Type Required: IPv4/IPv6 Address"
+                        }
+                    }
+                    # Remove spaces from Value
+                    $Value = $Value.Replace(" ","")
                 }
-                # Remove all spaces from Value to support type IPRange
-                $Value = $Value.Replace(" ","")
                 $ListItemDataType = "IPRange"
                 $ListItemType = "IPRange"
             }
+            User {
+                $ListItemDataType = "String"
+                $ListItemType = "StringValue"
+            }
             Default {}
-        }
-
-
-        # General Setup  
-        $Headers = [Dictionary[string,string]]::new()
-        $Headers.Add("Authorization", "Bearer $Token")
-        $Headers.Add("Content-Type","application/json")
-        if ($LoadListItems) {
-            $Headers.Add("loadListItems",$LoadListItems)
         }
 
         #$ExpDate = (Get-Date).AddDays(7).ToString("yyyy-MM-dd")
@@ -307,10 +437,10 @@ Function Add-LrListItem {
         $Method = $HttpMethod.Post
         $RequestUrl = $BaseUrl + "/lists/$Guid/items/"
 
-        # Request Body
-        $BodyContents = [PSCustomObject]@{
-            items = @(
-                [PSCustomObject]@{
+        if ($Value -is [array]) {
+            $Items = @()
+            ForEach ($Entry in $Value) {
+                $Items += @{
                     displayValue = 'List'
                     expirationDate = $ExpDate
                     isExpired =  $false
@@ -318,12 +448,43 @@ Function Add-LrListItem {
                     isPattern = $false
                     listItemDataType = $ListItemDataType
                     listItemType = $ListItemType
-                    value = $Value
-                    valueAsListReference = [PSCustomObject]@{
-                    }
+                    value = $Entry
+                    valueAsListReference = @{}
                 }
-            )
+            }
+            $ItemValues | Add-Member -NotePropertyName items -NotePropertyValue $Items
+   
+            # Check length of Items to Add to List
+            if ($ItemValues.length -gt 1000) {
+                #Split Items into multiple body contents
+                # TO DO
+                Write-Host "Over 1000 items submitted.  Currently not supported."
+            } else {
+                # Establish Body Contents
+                $BodyContents = [PSCustomObject]@{
+                    items = @(
+                        $ItemValues
+                    )
+                }
+            }
+        } else {
+            # Request Body
+            $BodyContents = [PSCustomObject]@{
+                items = @([PSCustomObject]@{
+                        displayValue = 'List'
+                        expirationDate = $ExpDate
+                        isExpired =  $false
+                        isListItem = $false
+                        isPattern = $false
+                        listItemDataType = $ListItemDataType
+                        listItemType = $ListItemType
+                        value = $Value
+                        valueAsListReference = [PSCustomObject]@{}
+                    }
+                )
+            }
         }
+        
 
         $Body = $BodyContents | ConvertTo-Json -Depth 3 -Compress
         Write-Verbose "[$Me] Request Body:`n$Body"
@@ -331,8 +492,18 @@ Function Add-LrListItem {
         # Check for Object Errors
         if ( $ErrorObject.Error -eq $true) {
             return $ErrorObject
+        } elseif ($Value -is [array]) {
+            # No Duplicate checking for array of items
+            # Send Request
+            try {
+                $Response = Invoke-RestMethod $RequestUrl -Headers $Headers -Method $Method -Body $Body
+            }
+            catch [System.Net.WebException] {
+                $Err = Get-RestErrorMessage $_
+                throw [Exception] "[$Me] [$($Err.statusCode)]: $($Err.message) $($Err.details)`n$($Err.validationErrors)`n"
+            }
         } else {
-            # Check for Duplicates
+            # Check for Duplicates for single items
             $ExistingValue = Test-LrListValue -Name $Guid -Value $Value
             if (($ExistingValue.IsPresent -eq $false) -and ($ExistingValue.ListValid -eq $true)) {
                 # Send Request
@@ -351,11 +522,9 @@ Function Add-LrListItem {
                 $ErrorObject.Note = "Duplicate Value.  Value: $Value"
                 return $ErrorObject
             }
-        }
-
-    }
-    
-    End {
+        }  
         return $Response
     }
+    
+    End { }
 }
