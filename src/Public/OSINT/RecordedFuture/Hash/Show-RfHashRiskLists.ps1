@@ -18,7 +18,7 @@ Function Show-RfHashiskLists {
         ---
 
     .NOTES
-        VirusTotal-API
+        RecordedFuture-API
     .LINK
         https://github.com/SmartResponse-Framework/SmartResponse.Framework
     #>
@@ -86,15 +86,14 @@ Function Show-RfHashiskLists {
         }
     }
 
-
-Process {
-    if ($Output -like "print") {
-        for ($i = 0;$i -lt $ValidLists.Count;$i++){
-            Write-Host "Num: $i`tList: $($ValidLists[$i].Name)`tList Value: $($ValidLists[$i].Value)"
+    Process {
+        if ($Output -like "print") {
+            for ($i = 0;$i -lt $ValidLists.Count;$i++){
+                Write-Host "Num: $i`tList: $($ValidLists[$i].Name)`tList Value: $($ValidLists[$i].Value)"
+            }
+        }
+        if ($Output -notlike "print") {
+            return $ValidLists
         }
     }
-    if ($Output -notlike "print") {
-        return $ValidLists
-    }
-}
 }

@@ -1,10 +1,10 @@
 
-Function Show-RfDomainRiskLists {
+Function Show-RfIPRiskLists {
     <#
     .SYNOPSIS
-        Shows RecordedFuture Domain threat list.
+        Shows RecordedFuture IP threat list.
     .DESCRIPTION
-        Shows or returns a RecordedFuture Domain threat list.  
+        Shows or returns a RecordedFuture IP threat list.  
     .INPUTS
         Output -> String
         Valid options: Object | Print
@@ -14,7 +14,7 @@ Function Show-RfDomainRiskLists {
     .OUTPUTS
         PSCustomObject representing the results or write-host printing the results.
     .EXAMPLE
-        PS C:\> Show-RfDomainRiskLists -Output print
+        PS C:\> Show-RfIPRiskLists -Output print
         ---
 
     .NOTES
@@ -30,6 +30,7 @@ Function Show-RfDomainRiskLists {
         [string] $Output = "object"
     )
     Begin {
+
         $ValidLists = @{
             0 = @{
                 Name = "Threat Actor Used Infrastructure"
@@ -96,7 +97,7 @@ Function Show-RfDomainRiskLists {
                 Value = "honeypotHost"
             }
             16 = @{
-                Name = "Recently Active C&C Server"
+                Name = "Recent Active C&C Server"
                 Value = "intermediateActiveCnc"
             }
             17 = @{
@@ -128,11 +129,11 @@ Function Show-RfDomainRiskLists {
                 Value = "malwareDelivery"
             }
             24 = @{
-                Name = "Historically Multicategory Blacklist"
+                Name = "Historical Multicategory Blacklist"
                 Value = "multiBlacklist"
             }
             25 = @{
-                Name = "Histoircal Open Proxies"
+                Name = "Historical Open Proxies"
                 Value = "openProxies"
             }
             26 = @{
@@ -160,7 +161,7 @@ Function Show-RfDomainRiskLists {
                 Value = "recentBotnet"
             }
             32 = @{
-                Name = "Current C&C Server"
+                Name = "Recent C&C Server"
                 Value = "recentCncServer"
             }
             33 = @{
@@ -176,7 +177,7 @@ Function Show-RfDomainRiskLists {
                 Value = "recentHoneypot"
             }
             36 = @{
-                Name = "Recently Linked to Intrusion Method"
+                Name = "Recently Linked to instrusion Method"
                 Value = "recentLinkedIntrusion"
             }
             37 = @{
@@ -188,80 +189,64 @@ Function Show-RfDomainRiskLists {
                 Value = "recentLinkedToCyberAttack"
             }
             39 = @{
-                Name = "Recent Malware Analysis DNS Name"
-                Value = "recentMalwareAnalysis"
+                Name = "Recent Multicategory Blacklist"
+                Value = "recentMultiBlacklist"
             }
             40 = @{
-                Name = "Recent Phishing Lure: Malicious"
-                Value = "recentPhishingLureMalicious"
+                Name = "Recent Positive Malware Verdict"
+                Value = "recentPositiveMalwareVerdict"
             }
             41 = @{
-                Name = "Recent Punycode Domain"
-                Value = "recentPunycode"
+                Name = "Recent Spam Source"
+                Value = "recentSpam"
             }
             42 = @{
-                Name = "Recently Referenced by Insikt Group"
-                Value = "recentRelatedNote"
+                Name = "Recent SSH/Dictionary Attacker"
+                Value = "recentSshDictAttacker"
             }
             43 = @{
-                Name = "Recent Threat Researcher"
-                Value = "recentThreatResearcher"
+                Name = "Recent Bad SSL Association"
+                Value = "recentSsl"
             }
             44 = @{
-                Name = "Recently Active Weaponized Domain"
-                Value = "recentWeaponizedDomain"
+                Name = "Recent Threat Researcher"
+                Value = "recentThreatResearcher"
             }
             45 = @{
                 Name = "Recently Defaced Site"
                 Value = "recentlyDefaced"
             }
             46 = @{
-                Name = "Historically Referenced by Insikt Group"
-                Value = "relatedNote"
-            }
-            47 = @{
-                Name = "Recent Threat Researcher"
-                Value = "recentThreatResearcher"
-            }
-            48 = @{
-                Name = "Recently Active Weaponized Domain"
-                Value = "recentWeaponizedDomain"
-            }
-            49 = @{
-                Name = "Recently Defaced Site"
-                Value = "recentlyDefaced"
-            }
-            50 = @{
-                Name = "Historically Referenced by Insikt Group"
-                Value = "relatedNote"
-            }
-            51 = @{
-                Name = "Recently Resolved to Malicious IP"
-                Value = "resolvedMaliciousIp"
-            }
-            52 = @{
-                Name = "Recently Resolved to Suspicious IP"
-                Value = "resolvedSuspiciousIp"
-            }
-            53 = @{
-                Name = "Recently Resolved to Unusual IP"
-                Value = "resolvedUnusualIp"
-            }
-            54 = @{
-                Name = "Recently Resolved to Very Malicious IP"
-                Value = "resolvedVeryMaliciousIp"
-            }
-            55 = @{
-                Name = "Recently Trending in Recorded Future Analyst Community"
+                Name = "Trending in Recorded Future Analyst Community"
                 Value = "rfTrending"
             }
-            56 = @{
-                Name = "Historically Threat Researcher"
+            47 = @{
+                Name = "Historical Spam Source"
+                Value = "spam"
+            }
+            48 = @{
+                Name = "Historical SSH/Dictionary Attacker"
+                Value = "sshDictAttacker"
+            }
+            49 = @{
+                Name = "Historical Bad SSL Association"
+                Value = "ssl"
+            }
+            50 = @{
+                Name = "Historical Threat Researcher"
                 Value = "threatResearcher"
             }
-            57 = @{
-                Name = "Historically Active Weaponized Domain"
-                Value = "weaponizedDomain"
+            51 = @{
+                Name = "Tor Node"
+                Value = "tor"
+            }
+            52 = @{
+                Name = "Unusual IP"
+                Value = "unusualIP"
+            }
+            53 = @{
+                Name = "Vulnerable Host"
+                Value = "vulnerableHost"
             }
         }
     }
@@ -275,5 +260,9 @@ Function Show-RfDomainRiskLists {
         if ($Output -notlike "print") {
             return $ValidLists
         }
+    }
+
+    End {
+
     }
 }
