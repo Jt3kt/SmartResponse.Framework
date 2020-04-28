@@ -2,29 +2,28 @@ using namespace System
 using namespace System.IO
 using namespace System.Collections.Generic
 
-Function Set-NetmonHostname {
+Function Get-NmDpaRulesCustom {
     <#
     .SYNOPSIS
-        Retrieve the Host Details from the LogRhythm Entity structure.
+        Retrieve metadata for all Custom DPA Rules.
     .DESCRIPTION
-        Get-LrHostDetails returns a full LogRhythm Host object, including details..
+        Get-NmDpaRulesCustom returns all Custom DPA Rules.
     .PARAMETER Credential
         PSCredential containing an API Token in the Password field.
-    .PARAMETER Id
-        [System.String] (Name or Int)
-        Specifies a LogRhythm host object by providing one of the following property values:
-          + List Name (as System.String), e.g. "MYSECRETHOST"
-          + List Int (as System.Int), e.g. 2657
-
-        Can be passed as ValueFromPipeline but does not support Arrays.
     .OUTPUTS
-        PSCustomObject representing LogRhythm Entity Host record and its contents.
+        PSCustomObject array of all Custom DPA Rules and their associated metadata.
     .EXAMPLE
-        PS C:\> Put-NetmonHostname
-
-        hostname
-        --------
-        mynetmon
+        PS C:\> Get-NetmonApplications
+        ----
+        _3Com
+        _3Com_Corp
+        _3Com_NBP
+        ...
+        ...
+        ...
+        stan
+        qbrick
+        tunnelguru
     .NOTES
         LogRhythm-API        
     .LINK
@@ -35,11 +34,7 @@ Function Set-NetmonHostname {
     Param(
         [Parameter(Mandatory = $false, Position = 0)]
         [ValidateNotNull()]
-        [pscredential] $Credential = $SrfPreferences.LrNetmon.n1.NmApiCredential,
-
-        [Parameter(Mandatory = $true, Position = 1)]
-        [ValidateNotNull()]
-        [string] $Hostname
+        [pscredential] $Credential = $SrfPreferences.LrNetmon.n1.NmApiCredential
     )
 
     Begin {
@@ -47,36 +42,33 @@ Function Set-NetmonHostname {
         $BaseUrl = $SrfPreferences.LrNetmon.n1.NmApiBaseUrl
         $NetmonAPI = $($Credential.GetNetworkCredential().UserName)+":"+$($Credential.GetNetworkCredential().Password)
         $Token = New-SrfBase64String -String $NetmonAPI
-        
+
         # Request Headers
         $Headers = [Dictionary[string,string]]::new()
         $Headers.Add("Content-Type", "application/json")
         $Headers.Add("Authorization", "Basic $Token")
 
         # Request Method
-        $Method = $HttpMethod.Put
+        $Method = $HttpMethod.Get
 
         Write-Verbose ($Headers | Out-String) 
 
         # Request URL
-        $RequestUri = $BaseUrl + "network/hostname"
+        $RequestUri = $BaseUrl + "dpaRules/custom"
     }
 
     Process {
-        # Request Setup
-        $Body = [PSCustomObject]@{ hostname = $Hostname } | ConvertTo-Json
-
         # Submit Request
         try {
-            $Response = Invoke-RestMethod $RequestUri -Headers $Headers -Method $Method -Body $Body
+            $Response = Invoke-RestMethod $RequestUri -Headers $Headers -Method $Method
         }
         catch [System.Net.WebException] {
             Write-Host $_
         }
+
+        return $Response
         
     }
 
-    End { 
-        return $Response
-    }
+    End { }
 }

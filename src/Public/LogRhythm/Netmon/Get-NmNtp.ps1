@@ -2,34 +2,22 @@ using namespace System
 using namespace System.IO
 using namespace System.Collections.Generic
 
-Function Get-NetmonSystemInfo {
+Function Get-NmNtp {
     <#
     .SYNOPSIS
-        Retrieve the Host Details from the LogRhythm Entity structure.
+        Retrieve the Netmon NTP server configuration.
     .DESCRIPTION
-        Get-LrHostDetails returns a full LogRhythm Host object, including details..
+        Get-NetmonNtp returns the NTP configuration for the requested Netmon server.
     .PARAMETER Credential
         PSCredential containing an API Token in the Password field.
-    .PARAMETER Id
-        [System.String] (Name or Int)
-        Specifies a LogRhythm host object by providing one of the following property values:
-          + List Name (as System.String), e.g. "MYSECRETHOST"
-          + List Int (as System.Int), e.g. 2657
-
-        Can be passed as ValueFromPipeline but does not support Arrays.
     .OUTPUTS
-        PSCustomObject representing LogRhythm Entity Host record and its contents.
+        PSCustomObject representing LogRhythm Netmon NTP record and its contents.
     .EXAMPLE
-        PS C:\> Get-NetmonSystemInfo
-        ----
-        name                  : Network Monitor
-        licensedName          : Network Monitor Freemium
-        versions              : {4.0.2.1093}
-        ipAddress             : 192.168.5.180
-        macAddress            : 00:05:55:55:55:55
-        licenseExpirationDate : unlimited
-        masterLicenseId       : None
-        machineID             : 15555555555555555555555495
+        PS C:\> Get-NetmonNtp
+
+        hostname
+        --------
+        netmon
     .NOTES
         LogRhythm-API        
     .LINK
@@ -40,12 +28,12 @@ Function Get-NetmonSystemInfo {
     Param(
         [Parameter(Mandatory = $false, Position = 0)]
         [ValidateNotNull()]
-        [pscredential] $Credential = $SrfPreferences.LrNetmon.NmApiCredential
+        [pscredential] $Credential = $SrfPreferences.LrNetmon.n1.NmApiCredential
     )
 
     Begin {
         Enable-TrustAllCertsPolicy
-        $BaseUrl = $SrfPreferences.LrNetmon.NmApiBaseUrl
+        $BaseUrl = $SrfPreferences.LrNetmon.n1.NmApiBaseUrl
         $NetmonAPI = $($Credential.GetNetworkCredential().UserName)+":"+$($Credential.GetNetworkCredential().Password)
         $Token = New-SrfBase64String -String $NetmonAPI
         $Headers = [Dictionary[string,string]]::new()
@@ -60,7 +48,7 @@ Function Get-NetmonSystemInfo {
 
         # Request Setup
         
-        $RequestUri = $BaseUrl + "systemInfo"
+        $RequestUri = $BaseUrl + "configuration/ntp"
         try {
             $Response = Invoke-RestMethod $RequestUri -Headers $Headers -Method $Method
         }

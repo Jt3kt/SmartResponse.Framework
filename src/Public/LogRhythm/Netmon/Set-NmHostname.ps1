@@ -2,7 +2,7 @@ using namespace System
 using namespace System.IO
 using namespace System.Collections.Generic
 
-Function Get-NetmonApplications {
+Function Set-NmHostname {
     <#
     .SYNOPSIS
         Retrieve the Host Details from the LogRhythm Entity structure.
@@ -20,17 +20,11 @@ Function Get-NetmonApplications {
     .OUTPUTS
         PSCustomObject representing LogRhythm Entity Host record and its contents.
     .EXAMPLE
-        PS C:\> Get-NetmonApplications
-        ----
-        _3Com
-        _3Com_Corp
-        _3Com_NBP
-        ...
-        ...
-        ...
-        stan
-        qbrick
-        tunnelguru
+        PS C:\> Put-NetmonHostname
+
+        hostname
+        --------
+        mynetmon
     .NOTES
         LogRhythm-API        
     .LINK
@@ -41,37 +35,40 @@ Function Get-NetmonApplications {
     Param(
         [Parameter(Mandatory = $false, Position = 0)]
         [ValidateNotNull()]
-        [pscredential] $Credential = $SrfPreferences.LrNetmon.NmApiCredential,
+        [pscredential] $Credential = $SrfPreferences.LrNetmon.n1.NmApiCredential,
 
-        [Parameter(Mandatory = $false, Position = 1)]
+        [Parameter(Mandatory = $true, Position = 1)]
         [ValidateNotNull()]
-        [string] $Application
+        [string] $Hostname
     )
 
     Begin {
         Enable-TrustAllCertsPolicy
-        $BaseUrl = $SrfPreferences.LrNetmon.NmApiBaseUrl
+        $BaseUrl = $SrfPreferences.LrNetmon.n1.NmApiBaseUrl
         $NetmonAPI = $($Credential.GetNetworkCredential().UserName)+":"+$($Credential.GetNetworkCredential().Password)
         $Token = New-SrfBase64String -String $NetmonAPI
-
+        
         # Request Headers
         $Headers = [Dictionary[string,string]]::new()
         $Headers.Add("Content-Type", "application/json")
         $Headers.Add("Authorization", "Basic $Token")
 
         # Request Method
-        $Method = $HttpMethod.Get
+        $Method = $HttpMethod.Put
 
         Write-Verbose ($Headers | Out-String) 
 
         # Request URL
-        $RequestUri = $BaseUrl + "applications"
+        $RequestUri = $BaseUrl + "network/hostname"
     }
 
     Process {
+        # Request Setup
+        $Body = [PSCustomObject]@{ hostname = $Hostname } | ConvertTo-Json
+
         # Submit Request
         try {
-            $Response = Invoke-RestMethod $RequestUri -Headers $Headers -Method $Method
+            $Response = Invoke-RestMethod $RequestUri -Headers $Headers -Method $Method -Body $Body
         }
         catch [System.Net.WebException] {
             Write-Host $_
@@ -80,15 +77,6 @@ Function Get-NetmonApplications {
     }
 
     End { 
-        if ($Application) {
-            Try {
-                # Add better logic here.  This returns True.
-                return $($Response.Applications.Contains($Application))
-            } Catch {
-                return "No application match"
-            }
-        } else {
-            return $Response.Applications
-        }
+        return $Response
     }
 }
